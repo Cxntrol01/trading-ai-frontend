@@ -86,18 +86,112 @@ export function calcMACD(candles) {
   const ema12 = calcEMA(candles, 12);
   const ema26 = calcEMA(candles, 26);
 
-  // Align arrays (EMA26 starts later)
-  const macd = ema26.map((e26, i) => {
-    const e12 = ema12[i + 14]; // shift to align
-    if (!e12) return null;
+  const macd = ema26
+    .map((e26, i) => {
+      const e12 = ema12[i + 14];
+      if (!e12) return null;
 
-    return {
-      time: e26.time,
-      value: e12.value - e26.value,
-    };
-  }).filter(Boolean);
+      return {
+        time: e26.time,
+        value: e12.value - e26.value,
+      };
+    })
+    .filter(Boolean);
 
   const signal = calcEMA(macd, 9);
 
   return { macd, signal };
+}
+
+// -----------------------------
+// Bollinger Bands (20 SMA + 2 SD)
+// -----------------------------
+export function calcBollingerBands(candles, length = 20, mult = 2) {
+  const sma = calcSMA(candles, length);
+  const bands = [];
+
+  for (let i = length - 1; i < candles.length; i++) {
+    const slice = candles.slice(i - length + 1, i + 1);
+    const mean = sma[i - (length - 1)].value;
+
+    const variance =
+      slice.reduce((s, c) => s + Math.pow(c.close - mean, 2), 0) / length;
+
+    const sd = Math.sqrt(variance);
+
+    bands.push({
+      time: candles[i].time,
+      upper: mean + mult * sd,
+      middle: mean,
+      lower: mean - mult * sd,
+    });
+  }
+
+  return bands;
+}
+
+// -----------------------------
+// ATR (Average True Range)
+// -----------------------------
+export function calcATR(candles, length = 14) {
+  const trs = [];
+
+  for (let i = 1; i < candles.length; i++) {
+    const high = candles[i].high;
+    const low = candles[i].low;
+    const prevClose = candles[i - 1].close;
+
+    const tr = Math.max(
+      high - low,
+      Math.abs(high - prevClose),
+      Math.abs(low - prevClose)
+    );
+
+    trs.push(tr);
+  }
+
+  const atr = [];
+  for (let i = length; i < trs.length; i++) {
+    const slice = trs.slice(i - length, i);
+    const avg = slice.reduce((a, b) => a + b, 0) / length;
+
+    atr.push({
+      time: candles[i].time,
+      value: avg,
+    });
+  }
+
+  return atr;
+}
+
+// -----------------------------
+// Stochastic Oscillator (%K and %D)
+// -----------------------------
+export function calcStochastic(candles, length = 14, smoothK = 3, smoothD = 3) {
+  const kValues = [];
+
+  for (let i = length - 1; i < candles.length; i++) {
+    const slice = candles.slice(i - length + 1, i + 1);
+
+    const high = Math.max(...slice.map((c) => c.high));
+    const low = Math.min(...slice.map((c) => c.low));
+    const close = candles[i].close;
+
+    const k = ((close - low) / (high - low)) * 100;
+    kValues.push({ time: candles[i].time, value: k });
+  }
+
+  // Smooth %K
+  const smooth = (arr, len) =>
+    arr.map((_, i) => {
+      if (i < len - 1) return null;
+      const slice = arr.slice(i - len + 1, i + 1);
+      const avg = slice.reduce((s, v) => s + v.value, 0) / len;
+      return { time: arr[i].time, value: avg };
+    }).filter(Boolean);
+
+  const kSmooth = smooth(kValues, smoothK);
+  const dSmooth = smooth(kSmooth, smoothD);
+
+  return { k: kSmooth, d: dSmooth };
 }
