@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { createChart } from "lightweight-charts";
 
-export default function PriceChart({ candles }) {
+export default function PriceChart({ candles, indicators }) {
   const chartRef = useRef(null);
 
   useEffect(() => {
@@ -17,8 +17,23 @@ export default function PriceChart({ candles }) {
     });
 
     const candleSeries = chart.addCandlestickSeries();
-
     candleSeries.setData(candles);
+
+    // --- INDICATORS ---
+    if (indicators?.sma) {
+      const smaSeries = chart.addLineSeries({ color: "blue", lineWidth: 2 });
+      smaSeries.setData(indicators.sma);
+    }
+
+    if (indicators?.ema) {
+      const emaSeries = chart.addLineSeries({ color: "orange", lineWidth: 2 });
+      emaSeries.setData(indicators.ema);
+    }
+
+    if (indicators?.vwap) {
+      const vwapSeries = chart.addLineSeries({ color: "purple", lineWidth: 2 });
+      vwapSeries.setData(indicators.vwap);
+    }
 
     const handleResize = () => {
       chart.applyOptions({ width: chartRef.current.clientWidth });
@@ -30,7 +45,7 @@ export default function PriceChart({ candles }) {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [candles]);
+  }, [candles, indicators]);
 
   return <div ref={chartRef} style={{ width: "100%", height: "300px" }} />;
 }
