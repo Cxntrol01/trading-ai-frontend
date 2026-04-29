@@ -7,7 +7,7 @@ export default function WatchlistPage() {
   const [watchlist, setWatchlist] = useState([]);
   const [ticker, setTicker] = useState("");
 
-  // Load watchlist on mount
+  // Load initial watchlist + subscribe to realtime changes
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
@@ -19,34 +19,45 @@ export default function WatchlistPage() {
     };
 
     load();
+
+    // Realtime: INSERT + DELETE
+    const channel = supabase
+      .channel("watchlist-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "watchlist" },
+        (payload) => {
+          setWatchlist((prev) => [payload.new, ...prev]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "watchlist" },
+        (payload) => {
+          setWatchlist((prev) => prev.filter((item) => item.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Add ticker
   const addTicker = async () => {
     if (!ticker.trim()) return;
 
-    const { data, error } = await supabase
+    await supabase
       .from("watchlist")
-      .insert([{ symbol: ticker.toUpperCase() }])
-      .select()
-      .single();
+      .insert([{ symbol: ticker.toUpperCase() }]);
 
-    if (!error) {
-      setWatchlist((prev) => [data, ...prev]);
-      setTicker("");
-    }
+    setTicker("");
   };
 
   // Remove ticker
   const removeTicker = async (id) => {
-    const { error } = await supabase
-      .from("watchlist")
-      .delete()
-      .eq("id", id);
-
-    if (!error) {
-      setWatchlist((prev) => prev.filter((item) => item.id !== id));
-    }
+    await supabase.from("watchlist").delete().eq("id", id);
   };
 
   return (
