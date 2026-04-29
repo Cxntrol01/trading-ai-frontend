@@ -1,24 +1,29 @@
 import { supabase } from "@/lib/supabaseClient";
-import PriceChart from "@/components/PriceChart";
-import AiAnalysis from "@/components/AiAnalysis";
-import { calcSMA, calcEMA, calcVWAP, calcRSI, calcMACD } from "@/lib/indicators";
+import MultiPaneChart from "@/components/MultiPaneChart";
+import IndicatorToggles from "@/components/IndicatorToggles";
+import AiIndicatorAnalysis from "@/components/AiIndicatorAnalysis";
+
+import {
+  calcSMA,
+  calcEMA,
+  calcVWAP,
+  calcRSI,
+  calcMACD,
+  calcBollingerBands,
+  calcATR,
+  calcStochastic,
+} from "@/lib/indicators";
+
+import { detectSupportResistance, detectTrendlines } from "@/lib/structure";
 
 export default async function SignalDetailPage({ params }) {
-  const { data: signal } = await supabase
-    .from("signals")
-    .select("*")
-    .eq("symbol", params.symbol)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
-
   const { data: candles } = await supabase
     .from("candles")
     .select("*")
     .eq("symbol", params.symbol)
     .order("time", { ascending: true });
 
-  const formatted = (candles || []).map((c) => ({
+  const formatted = candles.map((c) => ({
     time: c.time,
     open: c.open,
     high: c.high,
@@ -28,23 +33,52 @@ export default async function SignalDetailPage({ params }) {
   }));
 
   const indicators = {
-    sma: calcSMA(formatted, 14),
-    ema: calcEMA(formatted, 14),
+    sma: calcSMA(formatted),
+    ema: calcEMA(formatted),
     vwap: calcVWAP(formatted),
     rsi: calcRSI(formatted),
     macd: calcMACD(formatted),
+    bb: calcBollingerBands(formatted),
+    atr: calcATR(formatted),
+    stoch: calcStochastic(formatted),
+  };
+
+  const structure = {
+    support: detectSupportResistance(formatted).filter((l) => l.type === "support"),
+    resistance: detectSupportResistance(formatted).filter((l) => l.type === "resistance"),
+    trend: detectTrendlines(formatted).slice(-1)[0].slope > 0 ? "up" : "down",
   };
 
   return (
     <div>
-      <h1>{params.symbol} — Latest Signal</h1>
+      <h1>{params.symbol} — Full Analysis</h1>
 
-      <PriceChart candles={formatted} indicators={indicators} />
+      <IndicatorToggles
+        toggles={{
+          sma: true,
+          ema: true,
+          vwap: false,
+          bb: false,
+          rsi: true,
+          macd: true,
+        }}
+        setToggles={() => {}}
+      />
 
-      <h2>Signal Data</h2>
-      <pre>{JSON.stringify(signal, null, 2)}</pre>
+      <MultiPaneChart
+        candles={formatted}
+        indicators={indicators}
+        toggles={{
+          sma: true,
+          ema: true,
+          vwap: false,
+          bb: false,
+          rsi: true,
+          macd: true,
+        }}
+      />
 
-      <AiAnalysis signal={signal} />
+      <AiIndicatorAnalysis indicators={indicators} structure={structure} />
     </div>
   );
 }
