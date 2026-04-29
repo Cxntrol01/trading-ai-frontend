@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 
 export default async function SignalDetailPage({ params }) {
-  const { data: signal, error } = await supabase
+  const { data: signal } = await supabase
     .from("signals")
     .select("*")
     .eq("symbol", params.symbol)
@@ -12,9 +12,6 @@ export default async function SignalDetailPage({ params }) {
   return (
     <div>
       <h1>Signal for {params.symbol}</h1>
-
-      {error && <p>Error loading signal: {error.message}</p>}
-
       <pre>{JSON.stringify(signal, null, 2)}</pre>
     </div>
   );
