@@ -1,18 +1,10 @@
-import { supabase } from "@/lib/supabaseClient";
+import RealtimeSignals from "@/components/RealtimeSignals";
 
-export default async function DashboardPage() {
-  const { data: signals, error } = await supabase
-    .from("signals")
-    .select("*")
-    .order("created_at", { ascending: false });
-
+export default function DashboardPage() {
   return (
     <div>
       <h1>AI Trading Dashboard</h1>
-
-      {error && <p>Error loading signals: {error.message}</p>}
-
-      <pre>{JSON.stringify(signals, null, 2)}</pre>
+      <RealtimeSignals />
     </div>
   );
 }
