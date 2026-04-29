@@ -1,86 +1,121 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createChart } from "lightweight-charts";
+import {
+  createChart,
+  ColorType,
+  LineStyle,
+} from "lightweight-charts";
 
-export default function MultiPaneChart({ candles, indicators, toggles }) {
-  const mainRef = useRef(null);
+export default function MultiPaneChart({
+  candles,
+  indicators,
+  toggles,
+}) {
+  const chartRef = useRef(null);
   const rsiRef = useRef(null);
   const macdRef = useRef(null);
 
   useEffect(() => {
-    if (!mainRef.current) return;
+    if (!chartRef.current) return;
 
     // MAIN CHART
-    const mainChart = createChart(mainRef.current, {
-      width: mainRef.current.clientWidth,
-      height: 300,
+    const chart = createChart(chartRef.current, {
+      width: chartRef.current.clientWidth,
+      height: 450,
+      layout: { background: { type: ColorType.Solid, color: "#0d0d0d" }, textColor: "#d1d1d1" },
+      grid: { vertLines: { color: "#222" }, horzLines: { color: "#222" } },
+      timeScale: { borderColor: "#333" },
+      rightPriceScale: { borderColor: "#333" },
     });
 
-    const candleSeries = mainChart.addCandlestickSeries();
+    const candleSeries = chart.addCandlestickSeries();
     candleSeries.setData(candles);
 
-    // Overlays
+    // SMA
     if (toggles.sma) {
-      const sma = mainChart.addLineSeries({ color: "blue" });
-      sma.setData(indicators.sma);
+      const smaSeries = chart.addLineSeries({ color: "#4caf50", lineWidth: 2 });
+      smaSeries.setData(indicators.sma);
     }
 
+    // EMA
     if (toggles.ema) {
-      const ema = mainChart.addLineSeries({ color: "orange" });
-      ema.setData(indicators.ema);
+      const emaSeries = chart.addLineSeries({ color: "#ff9800", lineWidth: 2 });
+      emaSeries.setData(indicators.ema);
     }
 
+    // VWAP
     if (toggles.vwap) {
-      const vwap = mainChart.addLineSeries({ color: "purple" });
-      vwap.setData(indicators.vwap);
+      const vwapSeries = chart.addLineSeries({ color: "#03a9f4", lineWidth: 2 });
+      vwapSeries.setData(indicators.vwap);
     }
 
+    // Bollinger Bands
     if (toggles.bb) {
-      const upper = mainChart.addLineSeries({ color: "green" });
-      const lower = mainChart.addLineSeries({ color: "red" });
-
-      upper.setData(indicators.bb.map((b) => ({ time: b.time, value: b.upper })));
-      lower.setData(indicators.bb.map((b) => ({ time: b.time, value: b.lower })));
+      const upper = chart.addLineSeries({ color: "#8884d8", lineWidth: 1 });
+      const lower = chart.addLineSeries({ color: "#8884d8", lineWidth: 1 });
+      upper.setData(indicators.bb.upper);
+      lower.setData(indicators.bb.lower);
     }
 
-    // RSI PANE
-    if (toggles.rsi && rsiRef.current) {
-      const rsiChart = createChart(rsiRef.current, {
-        width: rsiRef.current.clientWidth,
-        height: 150,
-      });
+    // Volume bars
+    const volumeSeries = chart.addHistogramSeries({
+      color: "#26a69a",
+      priceFormat: { type: "volume" },
+      priceScaleId: "",
+    });
+    volumeSeries.setData(
+      candles.map((c) => ({
+        time: c.time,
+        value: c.volume,
+        color: c.close >= c.open ? "#26a69a" : "#ef5350",
+      }))
+    );
 
-      const rsiSeries = rsiChart.addLineSeries({ color: "teal" });
+    // RSI CHART
+    const rsiChart = createChart(rsiRef.current, {
+      width: rsiRef.current.clientWidth,
+      height: 150,
+      layout: { background: { type: ColorType.Solid, color: "#0d0d0d" }, textColor: "#d1d1d1" },
+      grid: { vertLines: { color: "#222" }, horzLines: { color: "#222" } },
+      timeScale: { borderColor: "#333" },
+      rightPriceScale: { borderColor: "#333" },
+    });
+
+    if (toggles.rsi) {
+      const rsiSeries = rsiChart.addLineSeries({ color: "#ffeb3b", lineWidth: 2 });
       rsiSeries.setData(indicators.rsi);
     }
 
-    // MACD PANE
-    if (toggles.macd && macdRef.current) {
-      const macdChart = createChart(macdRef.current, {
-        width: macdRef.current.clientWidth,
-        height: 150,
-      });
+    // MACD CHART
+    const macdChart = createChart(macdRef.current, {
+      width: macdRef.current.clientWidth,
+      height: 150,
+      layout: { background: { type: ColorType.Solid, color: "#0d0d0d" }, textColor: "#d1d1d1" },
+      grid: { vertLines: { color: "#222" }, horzLines: { color: "#222" } },
+      timeScale: { borderColor: "#333" },
+      rightPriceScale: { borderColor: "#333" },
+    });
 
-      const macdSeries = macdChart.addHistogramSeries({ color: "blue" });
-      macdSeries.setData(indicators.macd.macd);
-
-      const signalSeries = macdChart.addLineSeries({ color: "red" });
-      signalSeries.setData(indicators.macd.signal);
+    if (toggles.macd) {
+      const macdLine = macdChart.addLineSeries({ color: "#03a9f4", lineWidth: 2 });
+      const signalLine = macdChart.addLineSeries({ color: "#e91e63", lineWidth: 2 });
+      macdLine.setData(indicators.macd.macd);
+      signalLine.setData(indicators.macd.signal);
     }
+
+    return () => {
+      chart.remove();
+      rsiChart.remove();
+      macdChart.remove();
+    };
   }, [candles, indicators, toggles]);
 
   return (
     <div>
-      <div ref={mainRef} style={{ width: "100%", height: "300px" }} />
-
-      {toggles.rsi && (
-        <div ref={rsiRef} style={{ width: "100%", height: "150px", marginTop: "20px" }} />
-      )}
-
-      {toggles.macd && (
-        <div ref={macdRef} style={{ width: "100%", height: "150px", marginTop: "20px" }} />
-      )}
+      <div ref={chartRef} style={{ width: "100%", marginBottom: "20px" }} />
+      <div ref={rsiRef} style={{ width: "100%", marginBottom: "20px" }} />
+      <div ref={macdRef} style={{ width: "100%" }} />
     </div>
   );
 }
