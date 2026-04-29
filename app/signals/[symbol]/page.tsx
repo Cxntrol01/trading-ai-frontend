@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import PriceChart from "@/components/PriceChart";
 import AiAnalysis from "@/components/AiAnalysis";
+import { calcSMA, calcEMA, calcVWAP, calcRSI, calcMACD } from "@/lib/indicators";
 
 export default async function SignalDetailPage({ params }) {
   const { data: signal } = await supabase
@@ -23,13 +24,22 @@ export default async function SignalDetailPage({ params }) {
     high: c.high,
     low: c.low,
     close: c.close,
+    volume: c.volume,
   }));
+
+  const indicators = {
+    sma: calcSMA(formatted, 14),
+    ema: calcEMA(formatted, 14),
+    vwap: calcVWAP(formatted),
+    rsi: calcRSI(formatted),
+    macd: calcMACD(formatted),
+  };
 
   return (
     <div>
       <h1>{params.symbol} — Latest Signal</h1>
 
-      <PriceChart candles={formatted} />
+      <PriceChart candles={formatted} indicators={indicators} />
 
       <h2>Signal Data</h2>
       <pre>{JSON.stringify(signal, null, 2)}</pre>
