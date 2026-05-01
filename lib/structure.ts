@@ -1,37 +1,62 @@
-export function detectSupportResistance(candles, lookback = 20) {
-  const levels = [];
-
-  for (let i = lookback; i < candles.length - lookback; i++) {
-    const slice = candles.slice(i - lookback, i + lookback);
-
-    const low = candles[i].low;
-    const high = candles[i].high;
-
-    const isSupport = slice.every((c) => low <= c.low);
-    const isResistance = slice.every((c) => high >= c.high);
-
-    if (isSupport) levels.push({ type: "support", price: low, time: candles[i].time });
-    if (isResistance) levels.push({ type: "resistance", price: high, time: candles[i].time });
-  }
-
-  return levels;
+// -----------------------------
+// Candle Structure
+// -----------------------------
+export interface Candle {
+  time: number | string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
 }
 
-export function detectTrendlines(candles) {
-  const trendlines = [];
+// -----------------------------
+// Indicator Structures
+// -----------------------------
+export interface LinePoint {
+  time: number | string;
+  value: number;
+}
 
-  for (let i = 1; i < candles.length; i++) {
-    const prev = candles[i - 1];
-    const curr = candles[i];
+export interface BollingerBands {
+  upper: LinePoint[];
+  lower: LinePoint[];
+}
 
-    const slope = curr.close - prev.close;
+export interface MacdData {
+  macd: LinePoint[];
+  signal: LinePoint[];
+}
 
-    trendlines.push({
-      time: curr.time,
-      value: curr.close,
-      slope,
-    });
-  }
+export interface Indicators {
+  sma: LinePoint[];
+  ema: LinePoint[];
+  vwap: LinePoint[];
+  rsi: LinePoint[];
+  macd: MacdData;
+  bb: BollingerBands;
+}
 
-  return trendlines;
+// -----------------------------
+// Pattern Detection
+// -----------------------------
+export interface Pattern {
+  name: string;
+  time: number | string;
+  price: number;
+  type: "bullish" | "bearish" | "neutral";
+}
+
+// -----------------------------
+// Toggle Controls
+// -----------------------------
+export interface IndicatorToggles {
+  sma: boolean;
+  ema: boolean;
+  vwap: boolean;
+  bb: boolean;
+  rsi: boolean;
+  macd: boolean;
+  patterns: boolean;
+  volumeProfile: boolean;
 }
