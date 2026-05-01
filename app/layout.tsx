@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
   title: "Trading AI Tutor",
   description: "Learn trading with AI assistance",
