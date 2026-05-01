@@ -1,38 +1,46 @@
 "use client";
 
-export default function AiIndicatorAnalysis({ indicators, patterns, candles }) {
+import { Indicators, Pattern, Candle } from "@/lib/structure";
+
+interface Props {
+  indicators: Indicators | null;
+  patterns: Pattern[];
+  candles: Candle[];
+}
+
+export default function AiIndicatorAnalysis({ indicators, patterns, candles }: Props) {
   if (!indicators || candles.length === 0) return null;
 
   const last = candles[candles.length - 1];
 
   const trend =
     indicators.ema && indicators.sma
-      ? indicators.ema.at(-1).value > indicators.sma.at(-1).value
+      ? indicators.ema.at(-1)!.value > indicators.sma.at(-1)!.value
         ? "Uptrend — EMA above SMA, buyers in control."
         : "Downtrend — EMA below SMA, sellers dominating."
       : "Trend unclear — missing EMA/SMA.";
 
   const momentum =
     indicators.rsi
-      ? indicators.rsi.at(-1).value > 60
+      ? indicators.rsi.at(-1)!.value > 60
         ? "Strong bullish momentum (RSI > 60)."
-        : indicators.rsi.at(-1).value < 40
+        : indicators.rsi.at(-1)!.value < 40
         ? "Bearish momentum (RSI < 40)."
         : "Neutral momentum."
       : "Momentum unclear — RSI missing.";
 
   const volatility =
     indicators.bb
-      ? last.close > indicators.bb.upper.at(-1).value
+      ? last.close > indicators.bb.upper.at(-1)!.value
         ? "Price extended above upper Bollinger Band — volatility expansion."
-        : last.close < indicators.bb.lower.at(-1).value
+        : last.close < indicators.bb.lower.at(-1)!.value
         ? "Price extended below lower Bollinger Band — volatility spike."
         : "Volatility normal — price inside bands."
       : "Volatility unclear — Bollinger Bands missing.";
 
   const macdSignal =
     indicators.macd
-      ? indicators.macd.macd.at(-1).value > indicators.macd.signal.at(-1).value
+      ? indicators.macd.macd.at(-1)!.value > indicators.macd.signal.at(-1)!.value
         ? "MACD line above signal — bullish momentum shift."
         : "MACD line below signal — bearish momentum shift."
       : "MACD unavailable.";
@@ -52,8 +60,8 @@ export default function AiIndicatorAnalysis({ indicators, patterns, candles }) {
     if (trend.includes("Uptrend")) score++;
     if (momentum.includes("bullish")) score++;
     if (macdSignal.includes("bullish")) score++;
-    if (volatility.includes("below")) score--; // breakdown
-    if (volatility.includes("above")) score++; // breakout
+    if (volatility.includes("below")) score--;
+    if (volatility.includes("above")) score++;
 
     if (score >= 2) return "Overall Bias: Bullish";
     if (score <= -1) return "Overall Bias: Bearish";
