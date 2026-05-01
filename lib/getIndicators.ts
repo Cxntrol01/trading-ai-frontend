@@ -150,4 +150,4 @@ export function getIndicators(candles: Candle[]): Indicators {
     macd: calculateMACD(candles),
     bb: calculateBollingerBands(candles),
   };
-  }
+}
