@@ -11,9 +11,14 @@ import { getIndicators } from "@/lib/getIndicators";
 import { detectPatterns } from "@/lib/detectPatterns";
 import IndicatorToggles from "./IndicatorToggles";
 import AiIndicatorAnalysis from "./AiIndicatorAnalysis";
+import { Candle, Indicators, Pattern, IndicatorToggles as TogglesType } from "@/lib/structure";
 
-export default function ChartWithIndicators({ candles }) {
-  const [toggles, setToggles] = useState({
+interface Props {
+  candles: Candle[];
+}
+
+export default function ChartWithIndicators({ candles }: Props) {
+  const [toggles, setToggles] = useState<TogglesType>({
     sma: true,
     ema: true,
     vwap: false,
@@ -24,8 +29,8 @@ export default function ChartWithIndicators({ candles }) {
     volumeProfile: false,
   });
 
-  const [indicators, setIndicators] = useState(null);
-  const [patterns, setPatterns] = useState([]);
+  const [indicators, setIndicators] = useState<Indicators | null>(null);
+  const [patterns, setPatterns] = useState<Pattern[]>([]);
 
   useEffect(() => {
     if (!candles || candles.length === 0) return;
@@ -38,6 +43,8 @@ export default function ChartWithIndicators({ candles }) {
     if (!candles || candles.length === 0) return;
 
     const container = document.getElementById("chart-container");
+    if (!container) return;
+
     container.innerHTML = "";
 
     const chart = createChart(container, {
@@ -131,7 +138,10 @@ export default function ChartWithIndicators({ candles }) {
 
   return (
     <div className="w-full">
-      <div id="chart-container" className="w-full h-[420px] rounded-xl border border-[#222]" />
+      <div
+        id="chart-container"
+        className="w-full h-[420px] rounded-xl border border-[#222]"
+      />
 
       <IndicatorToggles toggles={toggles} setToggles={setToggles} />
 
@@ -142,4 +152,4 @@ export default function ChartWithIndicators({ candles }) {
       />
     </div>
   );
-}
+      }
