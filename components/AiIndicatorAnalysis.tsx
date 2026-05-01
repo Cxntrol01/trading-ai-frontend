@@ -1,39 +1,77 @@
 "use client";
 
-import { useState } from "react";
+export default function AiIndicatorAnalysis({ indicators, patterns, candles }) {
+  if (!indicators || candles.length === 0) return null;
 
-export default function AiIndicatorAnalysis({ indicators, structure }) {
-  const [text, setText] = useState("");
+  const last = candles[candles.length - 1];
 
-  const run = () => {
-    const summary = `
-Trend: ${structure.trend}
-Support Levels: ${structure.support.map((s) => s.price).join(", ")}
-Resistance Levels: ${structure.resistance.map((r) => r.price).join(", ")}
+  const trend =
+    indicators.ema && indicators.sma
+      ? indicators.ema.at(-1).value > indicators.sma.at(-1).value
+        ? "Uptrend — EMA above SMA, buyers in control."
+        : "Downtrend — EMA below SMA, sellers dominating."
+      : "Trend unclear — missing EMA/SMA.";
 
-SMA/EMA: ${
-      indicators.sma[indicators.sma.length - 1].value >
-      indicators.ema[indicators.ema.length - 1].value
-        ? "Bullish crossover"
-        : "Bearish crossover"
-    }
+  const momentum =
+    indicators.rsi
+      ? indicators.rsi.at(-1).value > 60
+        ? "Strong bullish momentum (RSI > 60)."
+        : indicators.rsi.at(-1).value < 40
+        ? "Bearish momentum (RSI < 40)."
+        : "Neutral momentum."
+      : "Momentum unclear — RSI missing.";
 
-RSI: ${indicators.rsi[indicators.rsi.length - 1].value.toFixed(1)}
-MACD: ${indicators.macd.macd[indicators.macd.macd.length - 1].value.toFixed(2)}
+  const volatility =
+    indicators.bb
+      ? last.close > indicators.bb.upper.at(-1).value
+        ? "Price extended above upper Bollinger Band — volatility expansion."
+        : last.close < indicators.bb.lower.at(-1).value
+        ? "Price extended below lower Bollinger Band — volatility spike."
+        : "Volatility normal — price inside bands."
+      : "Volatility unclear — Bollinger Bands missing.";
 
-Summary: Market structure and indicators suggest ${
-      structure.trend === "up" ? "bullish momentum" : "bearish pressure"
-    }.
-    `;
+  const macdSignal =
+    indicators.macd
+      ? indicators.macd.macd.at(-1).value > indicators.macd.signal.at(-1).value
+        ? "MACD line above signal — bullish momentum shift."
+        : "MACD line below signal — bearish momentum shift."
+      : "MACD unavailable.";
 
-    setText(summary);
-  };
+  const patternSummary =
+    patterns && patterns.length > 0
+      ? `Detected patterns: ${patterns.map((p) => p.name).join(", ")}.`
+      : "No major patterns detected.";
+
+  const volume =
+    last.volume > candles[candles.length - 2].volume
+      ? "Volume rising — increasing participation."
+      : "Volume declining — weaker conviction.";
+
+  const finalBias = (() => {
+    let score = 0;
+    if (trend.includes("Uptrend")) score++;
+    if (momentum.includes("bullish")) score++;
+    if (macdSignal.includes("bullish")) score++;
+    if (volatility.includes("below")) score--; // breakdown
+    if (volatility.includes("above")) score++; // breakout
+
+    if (score >= 2) return "Overall Bias: Bullish";
+    if (score <= -1) return "Overall Bias: Bearish";
+    return "Overall Bias: Neutral";
+  })();
 
   return (
-    <div>
-      <h2>AI Indicator Analysis</h2>
-      <button onClick={run}>Run AI Indicator Analysis</button>
-      {text && <pre>{text}</pre>}
+    <div className="bg-[#0f0f0f] border border-[#222] rounded-xl p-5 mt-6 space-y-3">
+      <h2 className="text-xl font-semibold text-white mb-2">AI Indicator Analysis</h2>
+
+      <p className="text-gray-300"><strong>Trend:</strong> {trend}</p>
+      <p className="text-gray-300"><strong>Momentum:</strong> {momentum}</p>
+      <p className="text-gray-300"><strong>MACD:</strong> {macdSignal}</p>
+      <p className="text-gray-300"><strong>Volatility:</strong> {volatility}</p>
+      <p className="text-gray-300"><strong>Volume:</strong> {volume}</p>
+      <p className="text-gray-300"><strong>Patterns:</strong> {patternSummary}</p>
+
+      <div className="mt-4 text-lg font-bold text-white">{finalBias}</div>
     </div>
   );
 }
