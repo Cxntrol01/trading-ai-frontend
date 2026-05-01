@@ -1,7 +1,14 @@
 "use client";
 
-export default function IndicatorToggles({ toggles, setToggles }) {
-  const handleToggle = (key) => {
+import { IndicatorToggles as IndicatorTogglesType } from "@/lib/structure";
+
+interface Props {
+  toggles: IndicatorTogglesType;
+  setToggles: (fn: (prev: IndicatorTogglesType) => IndicatorTogglesType) => void;
+}
+
+export default function IndicatorToggles({ toggles, setToggles }: Props) {
+  const handleToggle = (key: keyof IndicatorTogglesType) => {
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -10,7 +17,6 @@ export default function IndicatorToggles({ toggles, setToggles }) {
 
   return (
     <div className="grid grid-cols-2 gap-3 w-full mt-4">
-
       <div className={toggleStyle} onClick={() => handleToggle("sma")}>
         <span>SMA</span>
         <input type="checkbox" checked={toggles.sma} readOnly />
@@ -50,7 +56,6 @@ export default function IndicatorToggles({ toggles, setToggles }) {
         <span>Volume Profile</span>
         <input type="checkbox" checked={toggles.volumeProfile} readOnly />
       </div>
-
     </div>
   );
 }
