@@ -11,9 +11,7 @@ export function detectPatterns(candles: Candle[]): Pattern[] {
     const body2 = Math.abs(c2.close - c2.open);
     const range2 = c2.high - c2.low;
 
-    // -----------------------------
     // Bullish Engulfing
-    // -----------------------------
     if (
       c1.close < c1.open &&
       c2.close > c2.open &&
@@ -28,9 +26,7 @@ export function detectPatterns(candles: Candle[]): Pattern[] {
       });
     }
 
-    // -----------------------------
     // Bearish Engulfing
-    // -----------------------------
     if (
       c1.close > c1.open &&
       c2.close < c2.open &&
@@ -45,9 +41,7 @@ export function detectPatterns(candles: Candle[]): Pattern[] {
       });
     }
 
-    // -----------------------------
     // Hammer
-    // -----------------------------
     const lowerWick = c2.open < c2.close
       ? c2.open - c2.low
       : c2.close - c2.low;
@@ -65,9 +59,7 @@ export function detectPatterns(candles: Candle[]): Pattern[] {
       });
     }
 
-    // -----------------------------
     // Shooting Star
-    // -----------------------------
     const upperWick = c2.high - Math.max(c2.open, c2.close);
 
     if (
@@ -83,9 +75,7 @@ export function detectPatterns(candles: Candle[]): Pattern[] {
       });
     }
 
-    // -----------------------------
     // Doji
-    // -----------------------------
     if (body2 <= range2 * 0.05) {
       patterns.push({
         name: "Doji",
@@ -95,16 +85,14 @@ export function detectPatterns(candles: Candle[]): Pattern[] {
       });
     }
 
-    // -----------------------------
     // Morning Star (3‑candle)
-    // -----------------------------
     if (i >= 2) {
       const c0 = candles[i - 2];
 
       if (
-        c0.close < c0.open && // bearish
-        body1 < range2 * 0.3 && // small middle candle
-        c2.close > (c0.open + c0.close) / 2 // strong bullish close
+        c0.close < c0.open &&
+        body1 < range2 * 0.3 &&
+        c2.close > (c0.open + c0.close) / 2
       ) {
         patterns.push({
           name: "Morning Star",
@@ -115,16 +103,14 @@ export function detectPatterns(candles: Candle[]): Pattern[] {
       }
     }
 
-    // -----------------------------
     // Evening Star (3‑candle)
-    // -----------------------------
     if (i >= 2) {
       const c0 = candles[i - 2];
 
       if (
-        c0.close > c0.open && // bullish
-        body1 < range2 * 0.3 && // small middle candle
-        c2.close < (c0.open + c0.close) / 2 // strong bearish close
+        c0.close > c0.open &&
+        body1 < range2 * 0.3 &&
+        c2.close < (c0.open + c0.close) / 2
       ) {
         patterns.push({
           name: "Evening Star",
