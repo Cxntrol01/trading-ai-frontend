@@ -1,4 +1,4 @@
-import RealtimeSignals from "@/components/RealtimeSignals";
+import RealtimeSignals from "../../components/RealtimeSignals";
 import PnlSummary from "@/components/PnlSummary";
 
 export default function DashboardPage() {
